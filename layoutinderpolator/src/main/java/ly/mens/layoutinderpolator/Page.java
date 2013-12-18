@@ -1,11 +1,15 @@
 package ly.mens.layoutinderpolator;
 
+import android.graphics.Color;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -25,6 +29,8 @@ public class Page {
             for (int i = 0; i < childCount; i++) {
                 addView(viewGroup.getChildAt(i));
             }
+            // Containers must have clear background
+            container.setBackgroundColor(Color.TRANSPARENT);
         }
         else {
             // Page is a single animated view
@@ -90,5 +96,32 @@ public class Page {
             }
         }
         return ids;
+    }
+
+    public List<View> getViews(Collection<Integer> ids) {
+        List<View> views = new ArrayList<>(ids.size());
+        for (Integer id : ids) {
+            views.add(container.findViewById(id));
+        }
+        return views;
+    }
+
+    public ViewInfo getInfo(int id) {
+        return viewInfo.get(id);
+    }
+
+    public void reset() {
+        final int size = viewInfo.size();
+        for (int i = 0; i < size; i++) {
+            resetParameters(container.findViewById(viewInfo.keyAt(i)));
+        }
+    }
+
+    private void resetParameters(View view) {
+        view.setTranslationX(0);
+        view.setTranslationY(0);
+        view.setAlpha(1);
+        view.setScaleX(1);
+        view.setScaleY(1);
     }
 }
