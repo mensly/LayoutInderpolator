@@ -1,0 +1,71 @@
+#Application files
+*.apk
+*.ap_
+
+#Dev VM
+*.dex
+
+# Java class files
+*.class
+
+#Generated
+bin/
+gen/
+build/
+.gradle/
+
+#Configs
+local.properties
+
+#Eclipse
+#.classpath
+#.project
+proguard/
+
+#Intellij project files
+*.iml
+*.ipr
+*.iws
+.idea/
+
+#System
+.DS_Store
+*.swp
+*.ini~i
+*.keystore
+device-*.png
+
+#Application files
+*.apk
+*.ap_
+
+#Dev VM
+*.dex
+
+# Java class files
+*.class
+
+#Generated
+bin/
+gen/
+build/
+.gradle/
+
+#Configs
+local.properties
+
+#Eclipse
+#.classpath
+#.project
+proguard/
+
+#Intellij project files
+*.iml
+*.ipr
+*.iws
+.idea/
+
+#System
+.DS_Store
+*.swp
+*.ini
