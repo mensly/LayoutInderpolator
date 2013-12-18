@@ -46,6 +46,9 @@ public class Page {
         else {
             viewInfo.put(info.id, info);
         }
+        subview.setPivotX(0);
+        subview.setPivotY(0);
+        subview.setVisibility(View.VISIBLE);
     }
 
     /**
@@ -113,15 +116,8 @@ public class Page {
     public void reset() {
         final int size = viewInfo.size();
         for (int i = 0; i < size; i++) {
-            resetParameters(container.findViewById(viewInfo.keyAt(i)));
+            int key = viewInfo.keyAt(i);
+            viewInfo.get(key).reset(container.findViewById(key));
         }
-    }
-
-    private void resetParameters(View view) {
-        view.setTranslationX(0);
-        view.setTranslationY(0);
-        view.setAlpha(1);
-        view.setScaleX(1);
-        view.setScaleY(1);
     }
 }

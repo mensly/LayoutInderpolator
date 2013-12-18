@@ -5,11 +5,31 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Page 3"
-        android:gravity="center"
+        android:layout_centerInParent="true"
         android:background="@android:color/holo_orange_dark"
         android:id="@+id/page3_title" />
+
+    <View
+        android:id="@+id/test_move"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@android:color/holo_orange_dark"
+        android:visibility="invisible"
+        android:layout_centerInParent="true"
+        android:layout_margin="20dp"/>
+
+    <Button
+        android:id="@+id/btn_test"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Test Button"
+        android:onClick="onClick"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="60dp"
+        />
 </RelativeLayout>

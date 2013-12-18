@@ -5,19 +5,23 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 public class InderpolatorView extends FrameLayout {
-    private static final String LOGTAG = "LIS";
+    public static final String LOGTAG = "LIS";
 
     private static final float BUFFER_FRACTION = 0.1f;
     private static final float ANIMATE_SNAP = 0.3f;
     private static final float MOVE_THRESHOLD = 0.02f;
+    private static final float SWITCH_THRESHOLD = 0.00001f;
     private float currentPosition = 0;
     private int lastUpdatePage = -1;
     private List<Page> pages;
@@ -28,6 +32,7 @@ public class InderpolatorView extends FrameLayout {
     private Collection<View> panRight;
     private Page current;
     private Page next;
+    private Interpolator interpolator = new LinearInterpolator();
 
     public InderpolatorView(Context context) {
         super(context);
@@ -69,11 +74,18 @@ public class InderpolatorView extends FrameLayout {
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
         isLaidOut = true;
-        setupAnimation();
-        updatePositions();
+        if (changed) {
+            setupAnimation();
+            updatePositions();
+        }
     }
 
     private void setupAnimation() {
+        if (pages != null) {
+            for (Page p : pages) {
+                p.reset();
+            }
+        }
         int pageCount = getChildCount();
         pages = new ArrayList<>(pageCount);
         for (int i = 0; i < pageCount; i++) {
@@ -124,7 +136,7 @@ public class InderpolatorView extends FrameLayout {
         if (thisPage != lastUpdatePage) {
             if (pages != null) {
                 for (Page p : pages) {
-                    p.container.setVisibility(View.GONE);
+                    p.container.setVisibility(View.INVISIBLE);
                 }
                 // Get the pages of the transition
                 current = pages.get(thisPage);
@@ -136,7 +148,7 @@ public class InderpolatorView extends FrameLayout {
                     // Build up lists of relevant views between the two pages
                     this.panLeft = current.getViews(current.getCompliment(next));
                     this.panRight = next.getViews(next.getCompliment(current));
-                    Collection<Integer> intersection = current.getIntersection(next);
+                    List<Integer> intersection = new ArrayList<>(current.getIntersection(next));
                     this.interpolatedLeft = current.getViews(intersection);
                     this.interpolatedRight = next.getViews(intersection);
                 }
@@ -153,15 +165,39 @@ public class InderpolatorView extends FrameLayout {
             lastUpdatePage = thisPage;
         }
         int width = getWidth();
-        float phase = currentPosition - thisPage;
+        final float phase = interpolator.getInterpolation(currentPosition - thisPage);
+        final float phaseInv = 1 - phase;
         // Panning views simply move linearly off the page
         for (View v : this.panLeft) {
             v.setTranslationX(-width * phase);
+            v.setAlpha(phaseInv);
         }
         for (View v : this.panRight) {
-            v.setTranslationX(width * (1 - phase));
+            v.setTranslationX(width * phaseInv);
+            v.setAlpha(phase);
         }
-        // TODO: Handle panning views
-        // TODO: Handle interpolated views
+        final Iterator<View> leftIter = this.interpolatedLeft.iterator();
+        final Iterator<View> rightIter = this.interpolatedRight.iterator();
+        if (phase > SWITCH_THRESHOLD) {
+            while (leftIter.hasNext() && rightIter.hasNext()) {
+                View leftView = leftIter.next();
+                View rightView = rightIter.next();
+                ViewInfo leftInfo = current.getInfo(leftView.getId());
+                ViewInfo rightInfo = next.getInfo(rightView.getId());
+                leftView.setVisibility(View.INVISIBLE); // Hide view, as new view will take its place
+                // Display this view as it comes in
+                rightView.setVisibility(View.VISIBLE);
+                rightInfo.applyInterpolation(rightView, leftInfo, phaseInv);
+            }
+        }
+        else {
+            while (leftIter.hasNext() && rightIter.hasNext()) {
+                // Display the page as normal
+                View leftView = leftIter.next();
+                current.getInfo(leftView.getId()).reset(leftView);
+                leftView.setVisibility(View.VISIBLE);
+                rightIter.next().setVisibility(View.INVISIBLE); // Hide views from next page
+            }
+        }
     }
 }
