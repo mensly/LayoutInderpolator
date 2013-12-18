@@ -8,11 +8,11 @@ by the end result of using the [Jazz Hands][1] library for iOS, but is not a por
 
 Integrating With A Project
 ============================
-See provided sample.
+See provided sample for gradle integration from a cloned repo.
 
-TODO: Provide instructions for gradle integration
-
-TODO: Provide .jar builds
+Alternatively simply include the [jar file][2] in your project libs directory. For gradle add a
+dependency for all jar files in the libs directory:
+    compile fileTree(dir: 'libs', include: '*.jar')
 
 Use
 ============================
@@ -31,7 +31,8 @@ will cause it to fade out from its other position.
 
 Sample Application
 ============================
-
-TODO: Provide sample app build
+A compiled apk of the sample application is available [here][3].
 
  [1]: https://github.com/IFTTT/JazzHands
+ [2]: http://mens.ly/files/inderpolator/layoutinderpolator.0.1.jar
+ [3]: http://mens.ly/files/inderpolator/layoutinderpolator-sample.0.1.apk
