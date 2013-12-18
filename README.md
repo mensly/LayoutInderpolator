@@ -12,6 +12,7 @@ See provided sample for gradle integration from a cloned repo.
 
 Alternatively simply include the [jar file][2] in your project libs directory. For gradle add a
 dependency for all jar files in the libs directory:
+
     compile fileTree(dir: 'libs', include: '*.jar')
 
 Use
