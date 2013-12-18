@@ -1,6 +1,7 @@
 package ly.mens.layoutinderpolator;
 
 import android.content.Context;
+import android.os.CountDownTimer;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -16,10 +17,8 @@ import java.util.Iterator;
 import java.util.List;
 
 public class InderpolatorView extends FrameLayout {
-    public static final String LOGTAG = "LIS";
-
     private static final float BUFFER_FRACTION = 0.1f;
-    private static final float ANIMATE_SNAP = 0.3f;
+    private static final float ANIMATE_SNAP = 0.2f;
     private static final float MOVE_THRESHOLD = 0.02f;
     private static final float SWITCH_THRESHOLD = 0.00001f;
     private float currentPosition = 0;
@@ -36,6 +35,8 @@ public class InderpolatorView extends FrameLayout {
     private float initialX;
     private float initialTouchPosition;
     private PageFactory<?> factory;
+    private CountDownTimer timer;
+    private long transitionMillis = 500;
 
     public InderpolatorView(Context context) {
         super(context);
@@ -50,6 +51,21 @@ public class InderpolatorView extends FrameLayout {
     }
 
     /**
+     * Get the time it takes for a full transition animation
+     * default: 500ms
+     */
+    public long getTransitionMillis() {
+        return transitionMillis;
+    }
+
+    /**
+     * Set the time it takes for a full transition animation
+     */
+    public void setTransitionMillis(long transitionMillis) {
+        this.transitionMillis = transitionMillis;
+    }
+
+    /**
      * Which child view index is currently focused
      */
     public int getPage() {
@@ -60,9 +76,19 @@ public class InderpolatorView extends FrameLayout {
         return currentPosition;
     }
 
-    public void setCurrentPosition(float currentPosition, boolean animated) {
-        // TODO: Support animating
-        setCurrentPosition(currentPosition);
+    public void setCurrentPosition(float targetPosition, boolean animated) {
+        if (animated) {
+            synchronized (this) {
+                if (timer != null) {
+                    timer.cancel();
+                    timer = null;
+                }
+                timer = new AnimateTimer(transitionMillis, targetPosition).start();
+            }
+        }
+        else {
+            setCurrentPosition(targetPosition);
+        }
     }
 
     public void setCurrentPosition(float currentPosition) {
@@ -70,7 +96,12 @@ public class InderpolatorView extends FrameLayout {
         updatePositions();
     }
 
+    /**
+     * Go to the next page
+     * @return True if not already on the last page
+     */
     public boolean next(boolean animated) {
+        endAnimation();
         int current = getPage();
         if (current < getChildCount() - 1) {
             setCurrentPosition(current + 1, animated);
@@ -81,10 +112,14 @@ public class InderpolatorView extends FrameLayout {
         }
     }
 
+    /**
+     * Go to the previous page
+     * @return True if not already on the first page
+     */
     public boolean previous(boolean animated) {
+        endAnimation();
         int current = getPage();
         if (current > 0) {
-            // TODO: Animate to this position
             setCurrentPosition(current - 1, animated);
             return true;
         }
@@ -137,7 +172,12 @@ public class InderpolatorView extends FrameLayout {
         boolean handled = false;
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                // TODO: Cancel animation
+                synchronized (this) {
+                    if (timer != null) {
+                        timer.cancel();
+                        timer = null;
+                    }
+                }
                 initialX = event.getX();
                 initialTouchPosition = currentPosition;
                 handled = true;
@@ -154,7 +194,7 @@ public class InderpolatorView extends FrameLayout {
                 float diff = (event.getX() - initialX) / getWidth();
                 if (Math.abs(diff) < ANIMATE_SNAP) {
                     // Return to original position
-                    setCurrentPosition(initialTouchPosition, true);
+                    setCurrentPosition(Math.round(initialTouchPosition), true);
                 }
                 else {
                     // Move to next/previous page
@@ -245,6 +285,39 @@ public class InderpolatorView extends FrameLayout {
                 current.getInfo(leftView.getId()).reset(leftView);
                 leftView.setVisibility(View.VISIBLE);
                 rightIter.next().setVisibility(View.INVISIBLE); // Hide views from next page
+            }
+        }
+    }
+
+    synchronized private void endAnimation() {
+        if (timer != null) {
+            timer.cancel();
+            timer.onFinish();
+            timer = null;
+        }
+    }
+
+    private class AnimateTimer extends CountDownTimer {
+        private final float targetPosition;
+        private final float valuePerMilli;
+        private AnimateTimer(long transitionMillis, float targetPosition) {
+            super((long)(transitionMillis * Math.abs(targetPosition - currentPosition)), 1);
+            this.targetPosition = targetPosition;
+            this.valuePerMilli = Math.signum(currentPosition - targetPosition) / transitionMillis;
+        }
+
+        @Override
+        public void onTick(long millisUntilFinished) {
+            setCurrentPosition(targetPosition + valuePerMilli * millisUntilFinished);
+        }
+
+        @Override
+        public void onFinish() {
+            setCurrentPosition(targetPosition);
+            synchronized (InderpolatorView.this) {
+                if (timer == this) {
+                    timer = null;
+                }
             }
         }
     }
