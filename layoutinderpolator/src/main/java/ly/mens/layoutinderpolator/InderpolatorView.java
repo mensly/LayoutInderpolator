@@ -33,6 +33,8 @@ public class InderpolatorView extends FrameLayout {
     private Page current;
     private Page next;
     private Interpolator interpolator = new LinearInterpolator();
+    private float initialX;
+    private float initialTouchPosition;
 
     public InderpolatorView(Context context) {
         super(context);
@@ -57,9 +59,37 @@ public class InderpolatorView extends FrameLayout {
         return currentPosition;
     }
 
+    public void setCurrentPosition(float currentPosition, boolean animated) {
+        // TODO: Support animating
+        setCurrentPosition(currentPosition);
+    }
+
     public void setCurrentPosition(float currentPosition) {
-        this.currentPosition = Math.min(Math.max(0, currentPosition), pages.size() - 1);
+        this.currentPosition = Math.min(Math.max(0, currentPosition), getChildCount() - 1);
         updatePositions();
+    }
+
+    public boolean next(boolean animated) {
+        int current = getPage();
+        if (current < getChildCount() - 1) {
+            setCurrentPosition(current + 1, animated);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    public boolean previous(boolean animated) {
+        int current = getPage();
+        if (current > 0) {
+            // TODO: Animate to this position
+            setCurrentPosition(current - 1, animated);
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     @Override
@@ -93,9 +123,6 @@ public class InderpolatorView extends FrameLayout {
             pages.add(new Page(getChildAt(i)));
         }
     }
-
-    float initialX;
-    float initialTouchPosition;
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean handled = false;
@@ -116,14 +143,13 @@ public class InderpolatorView extends FrameLayout {
             }
             case MotionEvent.ACTION_UP: {
                 float diff = (event.getX() - initialX) / getWidth();
-                // TODO: Animate to this position
                 if (Math.abs(diff) < ANIMATE_SNAP) {
                     // Return to original position
-                    setCurrentPosition(initialTouchPosition);
+                    setCurrentPosition(initialTouchPosition, true);
                 }
                 else {
                     // Move to next/previous page
-                    setCurrentPosition(Math.round(initialTouchPosition - diff));
+                    setCurrentPosition(Math.round(initialTouchPosition - diff), true);
                 }
                 break;
             }
@@ -170,24 +196,37 @@ public class InderpolatorView extends FrameLayout {
         // Panning views simply move linearly off the page
         for (View v : this.panLeft) {
             v.setTranslationX(-width * phase);
-            v.setAlpha(phaseInv);
+            v.setAlpha(phaseInv * current.getInfo(v.getId()).alpha);
         }
         for (View v : this.panRight) {
             v.setTranslationX(width * phaseInv);
-            v.setAlpha(phase);
+            v.setAlpha(phase * next.getInfo(v.getId()).alpha);
         }
         final Iterator<View> leftIter = this.interpolatedLeft.iterator();
         final Iterator<View> rightIter = this.interpolatedRight.iterator();
         if (phase > SWITCH_THRESHOLD) {
             while (leftIter.hasNext() && rightIter.hasNext()) {
-                View leftView = leftIter.next();
-                View rightView = rightIter.next();
-                ViewInfo leftInfo = current.getInfo(leftView.getId());
-                ViewInfo rightInfo = next.getInfo(rightView.getId());
-                leftView.setVisibility(View.INVISIBLE); // Hide view, as new view will take its place
-                // Display this view as it comes in
-                rightView.setVisibility(View.VISIBLE);
-                rightInfo.applyInterpolation(rightView, leftInfo, phaseInv);
+                final View leftView = leftIter.next();
+                final View rightView = rightIter.next();
+                final ViewInfo leftInfo = current.getInfo(leftView.getId());
+                final ViewInfo rightInfo = next.getInfo(rightView.getId());
+                if (leftInfo.isColocated(rightInfo)) {
+                    // Show both views
+                    leftView.setVisibility(View.VISIBLE);
+                    rightView.setVisibility(View.VISIBLE);
+                    leftInfo.reset(leftView);
+                    rightInfo.reset(rightView);
+                    // Fade out left view
+                    leftView.setAlpha(leftInfo.alpha * phaseInv);
+                    // Fade in right view
+                    rightView.setAlpha(rightInfo.alpha * phase);
+                }
+                else {
+                    leftView.setVisibility(View.INVISIBLE); // Hide view, as new view will take its place
+                    // Display this view as it comes in
+                    rightView.setVisibility(View.VISIBLE);
+                    rightInfo.applyInterpolation(rightView, leftInfo, phaseInv);
+                }
             }
         }
         else {

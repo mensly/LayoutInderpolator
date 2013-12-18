@@ -49,7 +49,7 @@ public class ViewInfo {
         else {
             throw new RuntimeException("Mismatched ids used for interpolation");
         }
-    } 
+    }
     public void reset(View view) {
         if (id == view.getId()) {
             view.setX(x);
@@ -61,5 +61,39 @@ public class ViewInfo {
         else {
             throw new RuntimeException("Mismatched ids used to reset");
         }
+    }
+
+    /**
+     * Compare locations of views
+     * @return True if the position and size of the two views is equal
+     */
+    public boolean isColocated(ViewInfo other) {
+        return width == other.width && height == other.height &&
+                Float.compare(x, other.x) == 0 && Float.compare(y, other.y) == 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ViewInfo viewInfo = (ViewInfo) o;
+
+        if (!isColocated(viewInfo)) return false;
+        if (Float.compare(viewInfo.alpha, alpha) != 0) return false;
+        if (id != viewInfo.id) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id;
+        result = 31 * result + width;
+        result = 31 * result + height;
+        result = 31 * result + (x != +0.0f ? Float.floatToIntBits(x) : 0);
+        result = 31 * result + (y != +0.0f ? Float.floatToIntBits(y) : 0);
+        result = 31 * result + (alpha != +0.0f ? Float.floatToIntBits(alpha) : 0);
+        return result;
     }
 }

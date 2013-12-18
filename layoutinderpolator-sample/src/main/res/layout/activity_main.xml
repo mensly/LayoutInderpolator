@@ -2,8 +2,10 @@
 
 <ly.mens.layoutinderpolator.InderpolatorView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:id="@+id/main_view">
     <include layout="@layout/page1" />
     <include layout="@layout/page2" />
     <include layout="@layout/page3" />
+    <include layout="@layout/page4" />
 </ly.mens.layoutinderpolator.InderpolatorView>

@@ -3,7 +3,8 @@ package ly.mens.layoutinderpolator.sample;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Toast;
+
+import ly.mens.layoutinderpolator.InderpolatorView;
 
 public class InderpolatorActivity extends Activity implements View.OnClickListener {
     @Override
@@ -16,7 +17,7 @@ public class InderpolatorActivity extends Activity implements View.OnClickListen
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_test:
-                Toast.makeText(this, "Button clicked!", Toast.LENGTH_SHORT).show();
+                ((InderpolatorView)findViewById(R.id.main_view)).next(true);
                 break;
         }
     }
