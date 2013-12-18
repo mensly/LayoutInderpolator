@@ -6,8 +6,6 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Interpolator;
-import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 
 import java.util.ArrayList;
@@ -17,6 +15,10 @@ import java.util.Iterator;
 import java.util.List;
 
 public class InderpolatorView extends FrameLayout {
+    public static interface OnPageChangeListener {
+        public void onPageChange(InderpolatorView view, int page);
+    }
+
     private static final float BUFFER_FRACTION = 0.1f;
     private static final float ANIMATE_SNAP = 0.2f;
     private static final float MOVE_THRESHOLD = 0.02f;
@@ -31,12 +33,12 @@ public class InderpolatorView extends FrameLayout {
     private Collection<View> panRight;
     private Page current;
     private Page next;
-    private Interpolator interpolator = new LinearInterpolator();
     private float initialX;
     private float initialTouchPosition;
     private PageFactory<?> factory;
     private CountDownTimer timer;
     private long transitionMillis = 500;
+    private OnPageChangeListener listener;
 
     public InderpolatorView(Context context) {
         super(context);
@@ -63,6 +65,18 @@ public class InderpolatorView extends FrameLayout {
      */
     public void setTransitionMillis(long transitionMillis) {
         this.transitionMillis = transitionMillis;
+    }
+
+    public OnPageChangeListener getOnPageChangeListener() {
+        return listener;
+    }
+
+    public void setOnPageChangeListener(OnPageChangeListener listener) {
+        this.listener = listener;
+    }
+
+    public int getPageCount() {
+        return getChildCount();
     }
 
     /**
@@ -209,6 +223,9 @@ public class InderpolatorView extends FrameLayout {
     private void updatePositions() {
         int thisPage = (int)currentPosition;
         if (thisPage != lastUpdatePage) {
+            if (listener != null) {
+                listener.onPageChange(this, thisPage);
+            }
             if (pages != null) {
                 for (Page p : pages) {
                     p.container.setVisibility(View.INVISIBLE);
@@ -240,7 +257,7 @@ public class InderpolatorView extends FrameLayout {
             lastUpdatePage = thisPage;
         }
         int width = getWidth();
-        final float phase = interpolator.getInterpolation(currentPosition - thisPage);
+        final float phase = currentPosition - thisPage;
         final float phaseInv = 1 - phase;
         // Panning views simply move linearly off the page
         for (View v : this.panLeft) {
