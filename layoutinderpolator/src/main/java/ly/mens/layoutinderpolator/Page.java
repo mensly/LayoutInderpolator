@@ -18,6 +18,7 @@ import java.util.Set;
 public class Page {
     public final View container;
     private SparseArray<ViewInfo> viewInfo = new SparseArray<>();
+    private ViewInfoFactory<?> factory;
 
     public Page(View container) {
         this.container = container;
@@ -38,8 +39,19 @@ public class Page {
         }
     }
 
+    public Page setViewInfoFactory(ViewInfoFactory<?> factory) {
+        this.factory = factory;
+        return this;
+    }
+
     public void addView(View subview) {
-        ViewInfo info = new ViewInfo(subview);
+        final ViewInfo info;
+        if (factory == null) {
+            info = new ViewInfo(subview);
+        }
+        else {
+            info = factory.createInfo(subview);
+        }
         if (info.id == 0) {
             throw new IllegalArgumentException("Child views to be animated must have an id");
         }

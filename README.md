@@ -25,7 +25,8 @@ will simply fade and animate off the screen. If a view id is present on both pag
 position, they will fade between the two, remaining stationary. If they are not in the same
 position, the latter view takes precedence and will animate in from the size and shape of the, now
 hidden, former view. The purpose of these is to make the two views represent the same object, but
-in the sample they are coloured differently for clarity.
+in the sample they are coloured differently for clarity. Marking a view as invisible in the xml
+will cause it to fade out from its other position.
 
 
 Sample Application

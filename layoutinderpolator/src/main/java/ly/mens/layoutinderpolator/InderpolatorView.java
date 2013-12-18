@@ -35,6 +35,7 @@ public class InderpolatorView extends FrameLayout {
     private Interpolator interpolator = new LinearInterpolator();
     private float initialX;
     private float initialTouchPosition;
+    private PageFactory<?> factory;
 
     public InderpolatorView(Context context) {
         super(context);
@@ -118,9 +119,17 @@ public class InderpolatorView extends FrameLayout {
         }
         int pageCount = getChildCount();
         pages = new ArrayList<>(pageCount);
-        for (int i = 0; i < pageCount; i++) {
-            // Register new page
-            pages.add(new Page(getChildAt(i)));
+        if (factory == null) {
+            for (int i = 0; i < pageCount; i++) {
+                // Register new page
+                pages.add(new Page(getChildAt(i)));
+            }
+        }
+        else {
+            for (int i = 0; i < pageCount; i++) {
+                // Register new page
+                pages.add(factory.createPage(getChildAt(i)));
+            }
         }
     }
     @Override
