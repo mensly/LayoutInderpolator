@@ -283,9 +283,9 @@ public class InderpolatorView extends FrameLayout {
                     leftInfo.reset(leftView);
                     rightInfo.reset(rightView);
                     // Fade out left view
-                    leftView.setAlpha(leftInfo.alpha * phaseInv);
+                    leftView.setAlpha(leftInfo.alpha * (float)Math.sqrt(phaseInv));
                     // Fade in right view
-                    rightView.setAlpha(rightInfo.alpha * phase);
+                    rightView.setAlpha(rightInfo.alpha * (float)Math.sqrt(phase));
                 }
                 else {
                     leftView.setVisibility(View.INVISIBLE); // Hide view, as new view will take its place
