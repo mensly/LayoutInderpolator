@@ -247,6 +247,9 @@ public class InderpolatorView extends FrameLayout {
     }
 
     private void updatePositions() {
+        if (pages == null) {
+            return;
+        }
         int thisPage = (int)currentPosition;
         if (thisPage != lastUpdatePage) {
             if (listener != null) {
