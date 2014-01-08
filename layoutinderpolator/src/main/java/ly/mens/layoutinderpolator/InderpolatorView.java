@@ -39,6 +39,7 @@ public class InderpolatorView extends FrameLayout {
     private CountDownTimer timer;
     private long transitionMillis = 500;
     private OnPageChangeListener listener;
+    private boolean appendOnly = true;
 
     public InderpolatorView(Context context) {
         super(context);
@@ -65,6 +66,22 @@ public class InderpolatorView extends FrameLayout {
      */
     public void setTransitionMillis(long transitionMillis) {
         this.transitionMillis = transitionMillis;
+    }
+
+    public boolean isAppendOnly() {
+        return appendOnly;
+    }
+
+    public void setAppendOnly(boolean appendOnly) {
+        this.appendOnly = appendOnly;
+    }
+
+    public PageFactory<?> getFactory() {
+        return factory;
+    }
+
+    public void setFactory(PageFactory<?> factory) {
+        this.factory = factory;
     }
 
     public OnPageChangeListener getOnPageChangeListener() {
@@ -143,43 +160,52 @@ public class InderpolatorView extends FrameLayout {
     }
 
     @Override
-    public void addView(View child, int index, ViewGroup.LayoutParams params) {
-        super.addView(child, index, params);
-        if (isLaidOut) {
-            setupAnimation();
+    public void addView(final View child, final int index, ViewGroup.LayoutParams params) {
+        // Hide subviews by default when added
+        if (child instanceof ViewGroup) {
+            final ViewGroup group = (ViewGroup)child;
+            final int count = group.getChildCount();
+            for (int i = 0; i < count; i++) {
+                group.getChildAt(i).setAlpha(0);
+            }
         }
+        isLaidOut = false; // Signify the animations should be reset on next layout
+        super.addView(child, index, params);
     }
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        isLaidOut = true;
-        if (changed) {
+        if (changed || !isLaidOut) {
+            isLaidOut = true;
             setupAnimation();
             updatePositions();
         }
     }
 
-    private void setupAnimation() {
+    synchronized private void setupAnimation() {
         if (pages != null) {
             for (Page p : pages) {
                 p.reset();
             }
         }
         int pageCount = getChildCount();
-        pages = new ArrayList<>(pageCount);
+        if (pages == null || !appendOnly) {
+            pages = new ArrayList<>(pageCount);
+        }
         if (factory == null) {
-            for (int i = 0; i < pageCount; i++) {
+            for (int i = pages.size(); i < pageCount; i++) {
                 // Register new page
                 pages.add(new Page(getChildAt(i)));
             }
         }
         else {
-            for (int i = 0; i < pageCount; i++) {
+            for (int i = pages.size(); i < pageCount; i++) {
                 // Register new page
                 pages.add(factory.createPage(getChildAt(i)));
             }
         }
+        lastUpdatePage = -1;
     }
     @Override
     public boolean onTouchEvent(MotionEvent event) {
