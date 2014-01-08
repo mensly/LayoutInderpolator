@@ -248,9 +248,14 @@ public class InderpolatorView extends FrameLayout {
 
     private void updatePositions() {
         if (pages == null) {
+            // Not yet set up
             return;
         }
         int thisPage = (int)currentPosition;
+        if (thisPage > getPageCount()) {
+            // Edge case, do nothing for now
+            return;
+        }
         if (thisPage != lastUpdatePage) {
             if (listener != null) {
                 listener.onPageChange(this, thisPage);
