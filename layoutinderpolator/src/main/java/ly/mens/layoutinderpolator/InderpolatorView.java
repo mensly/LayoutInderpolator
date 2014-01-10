@@ -40,6 +40,7 @@ public class InderpolatorView extends FrameLayout {
     private long transitionMillis = 500;
     private OnPageChangeListener listener;
     private boolean appendOnly = true;
+    private float overscroll = 0;
 
     public InderpolatorView(Context context) {
         super(context);
@@ -124,6 +125,7 @@ public class InderpolatorView extends FrameLayout {
 
     public void setCurrentPosition(float currentPosition) {
         this.currentPosition = Math.min(Math.max(0, currentPosition), getChildCount() - 1);
+        this.overscroll = currentPosition - this.currentPosition;
         updatePositions();
     }
 
@@ -232,14 +234,18 @@ public class InderpolatorView extends FrameLayout {
             }
             case MotionEvent.ACTION_UP: {
                 float diff = (event.getX() - initialX) / getWidth();
+                float targetPosition;
                 if (Math.abs(diff) < ANIMATE_SNAP) {
                     // Return to original position
-                    setCurrentPosition(Math.round(initialTouchPosition), true);
+                    targetPosition = Math.round(initialTouchPosition);
                 }
                 else {
                     // Move to next/previous page
-                    setCurrentPosition(Math.round(initialTouchPosition - diff), true);
+                    targetPosition = Math.round(initialTouchPosition - diff);
                 }
+                // Remove overscroll
+                targetPosition = Math.min(Math.max(0, targetPosition), getChildCount() - 1);
+                setCurrentPosition(targetPosition, true);
                 break;
             }
         }
@@ -252,7 +258,7 @@ public class InderpolatorView extends FrameLayout {
             return;
         }
         int thisPage = (int)currentPosition;
-        if (thisPage > getPageCount()) {
+        if (thisPage >= getPageCount()) {
             // Edge case, do nothing for now
             return;
         }
@@ -338,6 +344,7 @@ public class InderpolatorView extends FrameLayout {
                 rightIter.next().setVisibility(View.INVISIBLE); // Hide views from next page
             }
         }
+        getChildAt(thisPage).setAlpha(1 - Math.abs(overscroll * 0.75f));
     }
 
     synchronized private void endAnimation() {
