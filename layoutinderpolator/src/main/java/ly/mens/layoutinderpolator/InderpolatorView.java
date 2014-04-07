@@ -262,7 +262,7 @@ public class InderpolatorView extends FrameLayout {
             // Edge case, do nothing for now
             return;
         }
-        if (thisPage != lastUpdatePage) {
+        if (thisPage != lastUpdatePage && thisPage < pages.size()) {
             if (listener != null) {
                 listener.onPageChange(this, thisPage);
             }
